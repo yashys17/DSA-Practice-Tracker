@@ -6,12 +6,22 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-DB_PATH = "dsa_tracker.db"
+import os
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "dsa_tracker.db")
+
+
+from flask import send_from_directory
+import os
 
 @app.route("/")
 def home():
-    return "Welcome to DSA Practice Tracker"
+    return send_from_directory("../Frontend", "index.html")
+
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory("../Frontend", path)
 
 
 @app.route("/testdb")
