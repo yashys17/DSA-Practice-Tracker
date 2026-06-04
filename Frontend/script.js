@@ -1,22 +1,14 @@
+let allProblems = [];
 
-
-// Load Statistics
-
+// Load Stats
 fetch("http://127.0.0.1:5000/stats")
 .then(response => response.json())
 .then(data => {
 
-    document.getElementById("total").innerText =
-    data.total_problems;
-
-    document.getElementById("easy").innerText =
-    data.easy;
-
-    document.getElementById("medium").innerText =
-    data.medium;
-
-    document.getElementById("hard").innerText =
-    data.hard;
+    document.getElementById("total").innerText = data.total_problems;
+    document.getElementById("easy").innerText = data.easy;
+    document.getElementById("medium").innerText = data.medium;
+    document.getElementById("hard").innerText = data.hard;
 
     new Chart(
         document.getElementById("myChart"),
@@ -42,19 +34,28 @@ fetch("http://127.0.0.1:5000/stats")
 });
 
 
-
-// Load Problems Table
-
+// Load Problems
 fetch("http://127.0.0.1:5000/problems")
 .then(response => response.json())
 .then(data => {
 
-    let table =
-    document.getElementById("problemTable");
+    allProblems = data;
+
+    renderProblems(data);
+
+});
+
+
+// Render Problems
+function renderProblems(data){
+
+    let table = document.getElementById("problemTable");
+
+    table.innerHTML = "";
 
     data.forEach(problem => {
 
-        let difficultyClass = "";
+        let difficultyClass = "hard";
 
         if(problem.difficulty === "Easy"){
             difficultyClass = "easy";
@@ -62,14 +63,65 @@ fetch("http://127.0.0.1:5000/problems")
         else if(problem.difficulty === "Medium"){
             difficultyClass = "medium";
         }
+
+        let linkHTML = "-";
+
+        if(problem.problem_link){
+            linkHTML = `
+            <a
+            href="${problem.problem_link}"
+            target="_blank"
+            onclick="markPending(${problem.id})">
+            Open
+            </a>
+            `;
+        }
+
+        let statusHTML = "";
+
+        if(problem.status === "Solved"){
+
+            statusHTML = `
+            <span style="color:green;font-weight:bold;">
+                🟢 Solved
+            </span>
+            `;
+
+        }
+        else if(problem.status === "Pending"){
+
+            statusHTML = `
+            <span style="color:orange;font-weight:bold;">
+                🟡 Pending
+            </span>
+            <br><br>
+            <button onclick="markSolved(${problem.id})">
+                Mark Solved
+            </button>
+            `;
+
+        }
         else{
-            difficultyClass = "hard";
+
+            statusHTML = `
+            <span style="color:red;font-weight:bold;">
+                🔴 Unsolved
+            </span>
+            <br><br>
+            <button onclick="markSolved(${problem.id})">
+                Mark Solved
+            </button>
+            `;
+
         }
 
         table.innerHTML += `
         <tr>
+
             <td>${problem.id}</td>
+
             <td>${problem.title}</td>
+
             <td>${problem.topic}</td>
 
             <td>
@@ -83,57 +135,129 @@ fetch("http://127.0.0.1:5000/problems")
                     ${problem.platform}
                 </span>
             </td>
+
+            <td>
+                ${statusHTML}
+            </td>
+
+            <td>
+                ${linkHTML}
+            </td>
+
+            <td>
+    <button onclick='showNotes(${JSON.stringify(problem.notes || "No Notes")})'>
+        View
+    </button>
+</td>
+
+            <td>
+                ${
+                    problem.status === "Solved"
+                    ? (problem.date_solved || "-")
+                    : "-"
+                }
+            </td>
+
         </tr>
         `;
+    });
+
+}
+
+
+// Search Problems
+function searchProblem(){
+
+    let value =
+    document.getElementById("searchBox")
+    .value
+    .toLowerCase();
+
+    let filtered =
+    allProblems.filter(problem =>
+
+        problem.title.toLowerCase().includes(value) ||
+
+        problem.topic.toLowerCase().includes(value)
+
+    );
+
+    renderProblems(filtered);
+
+}
+
+
+// Filter Problems
+function filterProblems(){
+
+    let difficulty =
+    document.getElementById("difficultyFilter").value;
+
+    let platform =
+    document.getElementById("platformFilter").value;
+
+    let filtered =
+    allProblems.filter(problem => {
+
+        let difficultyMatch =
+        difficulty === "All" ||
+        problem.difficulty === difficulty;
+
+        let platformMatch =
+        platform === "All" ||
+        problem.platform === platform;
+
+        return difficultyMatch && platformMatch;
 
     });
 
-});
+    renderProblems(filtered);
+
+}
 
 
+// Notes Modal
+function showNotes(notes){
 
-// Add New Problem
+    document.getElementById("noteText").innerText = notes;
 
-function addProblem(){
+    document.getElementById("notesModal").style.display = "block";
 
-    let title =
-    document.getElementById("title").value;
+}
 
-    let topic =
-    document.getElementById("topic").value;
+function closeNotes(){
 
-    let difficulty =
-    document.getElementById("difficulty").value;
+    document.getElementById("notesModal").style.display = "none";
 
-    let platform =
-    document.getElementById("platform").value;
+}
 
-    if(title === "" || topic === ""){
-        alert("Please fill all fields");
-        return;
-    }
+
+// Mark Pending
+function markPending(problemId){
 
     fetch(
-        "http://127.0.0.1:5000/add-problem",
+        `http://127.0.0.1:5000/pending/${problemId}`,
         {
-            method:"POST",
+            method: "PUT"
+        }
+    );
 
-            headers:{
-                "Content-Type":"application/json"
-            },
+}
 
-            body:JSON.stringify({
-                title:title,
-                topic:topic,
-                difficulty:difficulty,
-                platform:platform
-            })
+
+// Mark Solved
+function markSolved(problemId){
+
+    fetch(
+        `http://127.0.0.1:5000/solve/${problemId}`,
+        {
+            method: "PUT"
         }
     )
     .then(response => response.json())
     .then(data => {
 
-        alert("Problem Added Successfully");
+        alert("Problem Marked Solved");
 
         location.reload();
 
@@ -142,40 +266,7 @@ function addProblem(){
 }
 
 
-
-// Search Problems
-
-function searchProblem(){
-
-    let value =
-    document.getElementById("searchBox")
-    .value
-    .toLowerCase();
-
-    let rows =
-    document.querySelectorAll("#problemTable tr");
-
-    rows.forEach(row => {
-
-        if(
-            row.innerText
-            .toLowerCase()
-            .includes(value)
-        ){
-            row.style.display = "";
-        }
-        else{
-            row.style.display = "none";
-        }
-
-    });
-
-}
-
-
-
 // Dark Mode
-
 document
 .getElementById("themeBtn")
 .addEventListener("click", () => {
@@ -183,3 +274,58 @@ document
     document.body.classList.toggle("dark");
 
 });
+fetch("http://127.0.0.1:5000/streak")
+.then(response => response.json())
+.then(data => {
+
+    document.getElementById("streak").innerText =
+    data.streak + " Days";
+
+});
+fetch("http://127.0.0.1:5000/progress")
+.then(response => response.json())
+.then(data => {
+
+    document.getElementById("progress").innerText =
+    data.percent + "%";
+
+});
+fetch("http://127.0.0.1:5000/topics")
+.then(response => response.json())
+.then(data => {
+
+    let labels = [];
+    let values = [];
+
+    data.forEach(item => {
+
+        labels.push(item[0]);
+        values.push(item[1]);
+
+    });
+
+    new Chart(
+        document.getElementById("topicChart"),
+        {
+            type: "pie",
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: values
+                }]
+            }
+        }
+    );
+
+});
+function exportReport(){
+
+    fetch("http://127.0.0.1:5000/export")
+    .then(response => response.json())
+    .then(data => {
+
+        alert("Report Exported Successfully");
+
+    });
+
+}
