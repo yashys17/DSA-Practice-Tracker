@@ -1,7 +1,7 @@
 let allProblems = [];
 
 // Load Stats
-fetch("http://127.0.0.1:5000/stats")
+fetch("/stats")
 .then(response => response.json())
 .then(data => {
 
@@ -33,9 +33,8 @@ fetch("http://127.0.0.1:5000/stats")
 
 });
 
-
 // Load Problems
-fetch("http://127.0.0.1:5000/problems")
+fetch("/problems")
 .then(response => response.json())
 .then(data => {
 
@@ -44,7 +43,6 @@ fetch("http://127.0.0.1:5000/problems")
     renderProblems(data);
 
 });
-
 
 // Render Problems
 function renderProblems(data){
@@ -145,10 +143,10 @@ function renderProblems(data){
             </td>
 
             <td>
-    <button onclick='showNotes(${JSON.stringify(problem.notes || "No Notes")})'>
-        View
-    </button>
-</td>
+                <button onclick='showNotes(${JSON.stringify(problem.notes || "No Notes")})'>
+                    View
+                </button>
+            </td>
 
             <td>
                 ${
@@ -163,7 +161,6 @@ function renderProblems(data){
     });
 
 }
-
 
 // Search Problems
 function searchProblem(){
@@ -185,7 +182,6 @@ function searchProblem(){
     renderProblems(filtered);
 
 }
-
 
 // Filter Problems
 function filterProblems(){
@@ -215,7 +211,6 @@ function filterProblems(){
 
 }
 
-
 // Notes Modal
 function showNotes(notes){
 
@@ -231,12 +226,11 @@ function closeNotes(){
 
 }
 
-
 // Mark Pending
 function markPending(problemId){
 
     fetch(
-        `http://127.0.0.1:5000/pending/${problemId}`,
+        `/pending/${problemId}`,
         {
             method: "PUT"
         }
@@ -244,12 +238,11 @@ function markPending(problemId){
 
 }
 
-
 // Mark Solved
 function markSolved(problemId){
 
     fetch(
-        `http://127.0.0.1:5000/solve/${problemId}`,
+        `/solve/${problemId}`,
         {
             method: "PUT"
         }
@@ -265,7 +258,6 @@ function markSolved(problemId){
 
 }
 
-
 // Dark Mode
 document
 .getElementById("themeBtn")
@@ -274,7 +266,9 @@ document
     document.body.classList.toggle("dark");
 
 });
-fetch("http://127.0.0.1:5000/streak")
+
+// Streak
+fetch("/streak")
 .then(response => response.json())
 .then(data => {
 
@@ -282,7 +276,9 @@ fetch("http://127.0.0.1:5000/streak")
     data.streak + " Days";
 
 });
-fetch("http://127.0.0.1:5000/progress")
+
+// Progress
+fetch("/progress")
 .then(response => response.json())
 .then(data => {
 
@@ -290,7 +286,9 @@ fetch("http://127.0.0.1:5000/progress")
     data.percent + "%";
 
 });
-fetch("http://127.0.0.1:5000/topics")
+
+// Topic Analytics
+fetch("/topics")
 .then(response => response.json())
 .then(data => {
 
@@ -318,9 +316,11 @@ fetch("http://127.0.0.1:5000/topics")
     );
 
 });
+
+// Export Report
 function exportReport(){
 
-    fetch("http://127.0.0.1:5000/export")
+    fetch("/export")
     .then(response => response.json())
     .then(data => {
 
